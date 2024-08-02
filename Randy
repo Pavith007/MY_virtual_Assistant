@@ -1,0 +1,200 @@
+import pyttsx3
+import speech_recognition as sr
+import datetime
+import os
+import wikipedia
+import pywhatkit
+import pyautogui
+import pyjokes
+import webbrowser
+import openai
+from translate import Translator
+import yagmail
+
+
+openai.api_key= "Use Your GPT Key"
+
+Engine = pyttsx3.init('sapi5')
+voices= Engine.getProperty('voices')
+Engine.setProperty('voices',voices[0].id)
+
+def ask_chatgpt(question):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo", 
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": question},
+            ],
+        ) 
+        return response['choices'][0]['message']['content'].strip()
+       
+    except Exception as e:
+        print(f"Error: {e}")
+        return "I had an issue processing your request."
+
+def Speech(audio):
+    Engine.say(audio)
+    Engine.runAndWait()
+
+def takeCommand():
+     
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening...Boss")
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source,duration=0.5)
+        audio = r.listen(source)
+        print("Wait a few minitues boss")
+  
+    try:
+        print("Recognizing...")    
+        query = r.recognize_google(audio, language ='en-in')
+        Speech(f"User said: {query}\n")
+        print(f"User said: {query}\n")
+  
+    except Exception as e:
+        print(e)    
+        Speech("Pardon plzz.....")
+        print("Pardon plzz.....")  
+        return "None"
+     
+    return query
+def Greeting():
+    Hour = int(datetime.datetime.now().hour)
+    if Hour>=0 and Hour<=12:
+        print("Good Morning sir")
+        Speech("Good Morning sir")
+    elif Hour>12 and Hour<=16 :
+        print("Good Afternoon sir")
+        Speech("Good Afternoon sir")
+    elif Hour>16 and Hour<=19:
+        print("Good Evening sir")
+        Speech("Good Evening sir")
+    else:
+        print("Good Night sir")
+        Speech("Good Night sir")
+def WakeUpCommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+         
+        print("R.A.N.D.Y is Sleeping")
+        r.pause_threshold = 1
+        r.adjust_for_ambient_noise(source,duration=1)
+        audio = r.listen(source)
+    try:
+        query = r.recognize_google(audio, language ='en-in')
+        print(f"User said: {query}\n")
+    except Exception as e:
+        query="none"
+    return query
+
+def translate_Text(text,target_Languages='en'):
+    translator = Translator(to_lang=target_Languages)
+    translation = translator.translate(text)
+    return translation
+    
+if __name__=="__main__":
+    while True:
+        query=WakeUpCommand().lower()
+        if 'wake up' in query:
+            Greeting() 
+            Speech("Yes Sir ")
+            while True:
+                query=takeCommand().lower()
+                if 'time' in query:
+                    Strtime = datetime.datetime.now().strftime("%H:%M:%S")
+                    print(Strtime)
+                    Speech(f"Sire,the time is {Strtime}")
+                elif 'open edge' in query:
+                    Speech("Opening the Edge...")
+                    os.startfile("C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe")
+                elif 'randy' in query:
+                    query = query.replace('ask', '', 1).strip()
+                    if query:  
+                        response = ask_chatgpt(query)
+                        Speech(response)
+                        print(response)
+                    else:
+                        Speech("I'm sorry, I didn't catch that. What do you want to ask?")
+                elif 'wikipedia' in query:
+                    Speech("Searching in wikipedia....")
+                    try:
+                        query=query.replace("wikipedia","")
+                        results = wikipedia.summary(query,sentences=2)
+                        Speech("Accoring to Wikipedia , ")
+                        print(results)
+                        Speech(results)
+                    except:
+                        Speech("No information found...")
+                        print("No information found...") 
+            
+                elif 'play' in query:
+                    query=query.replace('play','')
+                    Speech('Playing the video' + query)
+                    pywhatkit.playonyt(query)
+                    
+                elif 'type' in query:
+                    Speech("plzz tell me What should i write boss")
+                    while True:
+                        InNotepad=takeCommand()
+                        if InNotepad=='exit':
+                            Speech("Done sir")
+                        else:
+                            pyautogui.write(InNotepad)
+                elif 'joke' in query:
+                    joke=pyjokes.get_joke()
+                    Speech(joke)
+                    print(joke)
+                elif 'google search' in query:
+                    Speech("What do you want to search for on Google?")
+                    Search = takeCommand().lower()
+                    if Search != 'None':  
+                        url = f'https://www.google.com/search?q={Search}'
+                        webbrowser.open(url)
+                        Speech("Here are the results from Google.")
+                elif 'youtube search' in query:
+                    Speech("What video are you looking for on YouTube?")
+                    Search = takeCommand().lower()
+                    if Search != 'None': 
+                        pywhatkit.playonyt(Search)
+                        Speech("Here are the results from YouTube.")
+                elif 'translate' in query:
+                    Speech("What do you want to translate?")
+                    text_t0_translate = takeCommand().lower()
+                    if text_t0_translate == 'none':
+                        continue
+                    Speech("Which language should I translate to? Please say the language in English.")
+                    target_languges= takeCommand().lower()
+                    language_codes = {
+                        'french': 'fr',
+                        'spanish': 'es',
+                        'german': 'de',
+                        'hindi': 'hi',
+                        'Arabic': 'ar',
+                        'chinese (Simplified)': 'zh-CN',
+                        'dutch': 'nl',
+                        'english': 'en',
+                        'italian': 'it',
+                        'japanese': 'ja',
+                        'korean': 'ko',
+                        'portuguese': 'pt',
+                        'russian': 'ru',
+                        'spanish': 'es',
+                        'swedish': 'sv',
+                        'tamil': 'ta',
+                        'telugu': 'te',
+                        'thai': 'th',
+                        'turkish': 'tr',
+                    }
+                    target_language_code = language_codes.get(target_languges, 'en')
+                    translated_text = translate_Text(text_t0_translate, target_language_code)
+                    Speech(f"The Translation is :{translated_text}") 
+                    print(f"Translated text:{translated_text}")
+                elif 'specs' in query:
+                    Speech("Accoring my Program I can be your voice assistant with feature including telling time ,telling information from Wikipedia , Gathering You information from Chat GPT , Type in Notepad , tell You Jokes ")
+                elif 'exit' in query:
+                    Speech("I am leaving sir, Bye!")
+                    break
+                elif 'quit' in query:
+                    quit()
